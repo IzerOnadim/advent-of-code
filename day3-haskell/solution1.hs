@@ -7,14 +7,14 @@ main = do
 parseToList :: String -> [String]
 parseToList = filter (not . null) . splitOn "\n"
 
-getPowerCons :: [String] -> Integer
+getPowerCons :: [String] -> Int
 getPowerCons []       = 0
 getPowerCons xs@(x:_) = getProduct 0 0 acc (length acc - 1)
   where
     n   = length x -- Assume all binary strings are same length.
     acc = foldl binAdd (replicate n 0) xs
 
-getProduct :: Integer -> Integer -> [Int] -> Int -> Integer
+getProduct :: Int -> Int -> [Int] -> Int -> Int
 getProduct g e []     _ = g * e
 getProduct g e (x:xs) n = getProduct g' e' xs (n - 1)
   where
