@@ -1,9 +1,9 @@
+import lombok.*;
+
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class BingoPlayer {
@@ -39,7 +39,9 @@ public class BingoPlayer {
         }
     }
 
-    public int playBingo() {
+    public int bestBoardScore() {
+        // Adding, checking and calculating the score of the board are all O(1). So getting the best board score
+        // is at worst O(n x m) where n is the number of bingo numbers drawn, and m is the number of boards.
         for (int number : numbers) {
             for (Board board : boards) {
                 board.addNumber(number);
@@ -48,13 +50,20 @@ public class BingoPlayer {
                 }
             }
         }
-
         return -1; // No bingo.
     }
 
+    @Value
+    private static class Pos {
+        int x;
+        int y;
+        boolean drawn;
+    }
+
     private static class Board {
+
         private static final int BOARD_SIZE = 5;
-        private final Integer[][] board = new Integer[BOARD_SIZE][BOARD_SIZE];
+        private final Map<Integer, Pos> board = new HashMap<>();
         private final Boolean[][] drawn = new Boolean[BOARD_SIZE][BOARD_SIZE];
 
         public Board(List<String> boardStr) {
@@ -64,24 +73,24 @@ public class BingoPlayer {
                         .filter(x -> !x.isBlank()).toArray(String[]::new);
 
                 for (int j = 0; j < columns.length; j++) {
-                    board[i][j] = Integer.parseInt(columns[j]);
+                    board.put(Integer.parseInt(columns[j]), new Pos(i, j, false));
                     drawn[i][j] = false;
                 }
             }
         }
 
         public void addNumber(int number) {
-            for (int i = 0; i < BOARD_SIZE; i++) {
-                for (int j = 0; j < BOARD_SIZE; j++) {
-                    int num = board[i][j];
-                    if (number == num) {
-                        drawn[i][j] = true;
-                    }
-                }
+            // Adding a number is O(1) since both array and hashmap access is O(1).
+            Pos numPos = board.get(number);
+            if (numPos != null) {
+                drawn[numPos.getX()][numPos.getY()] = true;
+                board.replace(number, new Pos(numPos.getX(), numPos.getY(), true));
             }
         }
 
         public boolean checkBingo() {
+            // This is actually constant time since BOARD_SIZE = 5. So it is 0(25) ~ O(1).
+
             // Check for bingo in rows.
             for (Boolean[] row : drawn) {
                 if (Arrays.stream(row).reduce(true, (l, r) -> l && r)) {
@@ -109,20 +118,15 @@ public class BingoPlayer {
         }
 
         private int bingoScore(int lastNum) {
-            int bingoSum = 0;
-            for (int i = 0; i < BOARD_SIZE; i++) {
-                for (int j = 0; j < BOARD_SIZE; j++) {
-                    if (!drawn[i][j]) {
-                        bingoSum += board[i][j];
-                    }
+            // This is also constant time since there are at most BOARD_SIZE x BOARD_SIZE elements in the hashmap.
+            // So O(BOARD_SIZE^2) = O(25) ~ O(1).
+            AtomicInteger bingoSum = new AtomicInteger();
+            board.forEach((k, v) -> {
+                if (!v.isDrawn()) {
+                    bingoSum.getAndAdd(k);
                 }
-            }
-            return lastNum * bingoSum;
-        }
-
-        @Override
-        public String toString() {
-            return Arrays.stream(board).map(a -> Arrays.deepToString(a) + "\n").collect(Collectors.joining());
+            });
+            return lastNum * bingoSum.get();
         }
     }
 }
