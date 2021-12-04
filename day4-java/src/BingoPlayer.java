@@ -53,6 +53,28 @@ public class BingoPlayer {
         return -1; // No bingo.
     }
 
+    public int worstBoardScore() {
+        // For the same reasoning as above, this is O(n x m) where n is the number of bingo numbers drawn,
+        // and m is the number of boards.
+        int lastNum = -1;
+        Board lastBoard = null;
+        for (int number : numbers) {
+            Iterator<Board> it = boards.iterator();
+            while (it.hasNext()) {
+                Board board = it.next();
+                board.addNumber(number);
+                if (board.checkBingo()) {
+                    lastNum = number;
+                    lastBoard = board;
+                    it.remove();
+                }
+            }
+        }
+        if (lastBoard == null)
+            return -1;
+        return lastBoard.bingoScore(lastNum); // No bingo.
+    }
+
     @Value
     private static class Pos {
         int x;
