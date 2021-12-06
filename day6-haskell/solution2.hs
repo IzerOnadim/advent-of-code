@@ -7,8 +7,18 @@ main = do
 parseToList :: String -> [Int]
 parseToList = map read . filter (not . null) . splitOn ","
 
-numFishAfterDays :: [Int] -> Int -> Int  
-numFishAfterDays xs d = length ((iterate singleDay xs) !! d)
+numFishAfterDays :: [Int] -> Int -> Int
+numFishAfterDays xs d = length xs''
+  where
+    (weeks, days) = (d `div` 7, d `mod` 7)
+    xs'  = (iterate singleWeek xs) !! weeks
+    xs'' = (iterate singleDay xs') !! days
+
+singleWeek :: [Int] -> [Int]
+singleWeek [] = []
+singleWeek (8:xs) = 1 : singleWeek xs
+singleWeek (7:xs) = 0 : singleWeek xs
+singleWeek (x:xs) = x : (x + 2) : singleWeek xs
 
 singleDay :: [Int] -> [Int]
 singleDay [] = []
